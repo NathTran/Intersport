@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu des Trios - Supports d'Affichage en Magasin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #764ba2;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .instructions {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .instructions h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .instructions p {
+            margin: 5px 0;
+            line-height: 1.6;
+        }
+        
+        .game-area {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .column {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            min-height: 600px;
+        }
+        
+        .column-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .photos-column .column-title {
+            background: #FFE5E5;
+            color: #D32F2F;
+        }
+        
+        .names-column .column-title {
+            background: #E3F2FD;
+            color: #1976D2;
+        }
+        
+        .definitions-column .column-title {
+            background: #E8F5E9;
+            color: #388E3C;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+            position: relative;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        .card.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .card.matched {
+            opacity: 0.5;
+            pointer-events: none;
+            border-color: #4CAF50;
+            background: #e8f5e9;
+        }
+        
+        .card.correct {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+            animation: correctPulse 0.5s;
+        }
+        
+        .card.incorrect {
+            border-color: #f44336;
+            background: #ffebee;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .photo-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #e0e0e0;
+        }
+        
+        .photo-number {
+            text-align: center;
+            font-weight: bold;
+            color: #D32F2F;
+            font-size: 1.1em;
+        }
+        
+        .name-card {
+            text-align: center;
+            font-weight: bold;
+            color: #1976D2;
+            font-size: 1.1em;
+            padding: 20px 10px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .definition-card {
+            color: #388E3C;
+            line-height: 1.6;
+            font-size: 0.95em;
+            min-height: 100px;
+        }
+        
+        .match-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 1.2em;
+        }
+        
+        .card.matched .match-indicator {
+            display: flex;
+            background: #4CAF50;
+        }
+        
+        .progress {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.3em;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .validate-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .validate-btn:hover:not(:disabled) {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+        
+        .validate-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .reset-btn {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .reset-btn:hover {
+            background: #e68900;
+            transform: scale(1.05);
+        }
+        
+        .hint-btn {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .hint-btn:hover {
+            background: #1976D2;
+            transform: scale(1.05);
+        }
+        
+        .pdf-btn {
+            background: #9C27B0;
+            color: white;
+        }
+        
+        .pdf-btn:hover {
+            background: #7B1FA2;
+            transform: scale(1.05);
+        }
+        
+        .result {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result.success {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .result.partial {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .hint-message {
+            text-align: center;
+            padding: 15px;
+            background: #E3F2FD;
+            border-radius: 10px;
+            margin: 15px 0;
+            color: #1976D2;
+            font-weight: bold;
+            display: none;
+        }
+        
+        .hint-message.show {
+            display: block;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 20px;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+            
+            .instructions, .game-area, .buttons, .hint-message {
+                display: none !important;
+            }
+            
+            .print-content {
+                display: block !important;
+            }
+            
+            h1 {
+                color: #333;
+                page-break-after: avoid;
+            }
+        }
+        
+        .print-content {
+            display: none;
+            page-break-inside: avoid;
+        }
+        
+        .print-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .print-header h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .print-score {
+            font-size: 1.8em;
+            color: #4CAF50;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        
+        .print-section {
+            margin: 30px 0;
+            page-break-inside: avoid;
+        }
+        
+        .print-section h3 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            border-bottom: 2px solid #764ba2;
+            padding-bottom: 10px;
+        }
+        
+        .print-trio {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 5px solid #4CAF50;
+            page-break-inside: avoid;
+        }
+        
+        .print-trio.incomplete {
+            border-left-color: #ff9800;
+            background: #fff8e1;
+        }
+        
+        .print-trio-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.2em;
+            margin-bottom: 8px;
+        }
+        
+        .print-trio-def {
+            color: #666;
+            line-height: 1.6;
+            margin-left: 20px;
+        }
+        
+        .print-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+            text-align: center;
+            color: #666;
+        }
+        
+        @media (max-width: 1200px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+            
+            .column {
+                min-height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Jeu des Trios</h1>
+        <div class="subtitle">Supports d'Affichage en Magasin</div>
+        
+        <div class="instructions">
+            <h2>📋 Règles du jeu :</h2>
+            <p><strong>Objectif :</strong> Former des trios en associant chaque PHOTO + NOM + DÉFINITION</p>
+            <p><strong>1.</strong> Clique sur une photo (colonne rouge)</p>
+            <p><strong>2.</strong> Clique sur le nom correspondant (colonne bleue)</p>
+            <p><strong>3.</strong> Clique sur la définition correspondante (colonne verte)</p>
+            <p><strong>4.</strong> Si les 3 éléments correspondent, le trio est validé automatiquement ✓</p>
+            <p><strong>5.</strong> Continue jusqu'à former les 13 trios !</p>
+        </div>
+        
+        <div class="progress" id="progress">Trios formés : 0/13 🎯</div>
+        <div class="hint-message" id="hintMessage"></div>
+        
+        <div class="game-area">
+            <div class="column photos-column">
+                <div class="column-title">📸 PHOTOS</div>
+                
+                <div class="card photo-card" data-id="etiquette-prix" data-type="photo">
+                    <img src="https://via.placeholder.com/400x250/FF6B6B/ffffff?text=Etiquette+Prix" alt="Étiquette prix">
+                    <div class="photo-number">Photo A</div>
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card photo-card" data-id="cadre-prix" data-type="photo">
+                    <img src="https://via.placeholder.com/400x250/FF8C42/ffffff?text=Cadre+Prix" alt="Cadre prix">
+                    <div class="photo-number">Photo B</div>
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card photo-card" data-id="stop-rayon" data-type="photo">
+                    <img src="https://via.placeholder.com/400x250/FFA07A/ffffff?text=Stop+Rayon" alt="Stop-rayon">
+                    <div class="photo-number">Photo C</div>
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card photo-card" data-id="presentoir" data-type="photo">
+                    <img src="https://via.placeholder.com/400x250/98D8C8/ffffff?text=Presentoir" alt="Présentoir">
+                    <div class="photo-number">Photo D</div>
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card photo-card" data-id="kakemono" data-type="photo">
+                    <img src="https://via.placeholder.com/400x250/6BCF7F/ffffff?text=Kakemono" alt="Kakémono">
+                    <div class="photo-number">Photo E</div>
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card photo-card" data-id="affiche" data-type="photo">
+                    <img src="https://via.placeholder.com/400x250/4D96FF/ffffff?text=Affiche" alt="Affiche">
+                    <div class="photo-number">Photo F</div>
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card photo-card" data-id="ilv-produit" data-type="photo">
+                    <img src="https://via.placeholder.com/400x250/5F9DF7/ffffff?text=ILV+Produit" alt="ILV produit">
+                    <div class="photo-number">Photo G</div>
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card photo-card" data-id="plv-promotion" data-type="photo">
+                    <img src="https://via.placeholder.com/400x250/FF6B9D/ffffff?text=PLV+Promotion" alt="PLV promotion">
+                    <div class="photo-number">Photo H</div>
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card photo-card" data-id="bandeau-lineaire" data-type="photo">
+                    <img src="https://via.placeholder.com/400x250/C44569/ffffff?text=Bandeau+Lineaire" alt="Bandeau linéaire">
+                    <div class="photo-number">Photo I</div>
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card photo-card" data-id="tete-gondole" data-type="photo">
+                    <img src="https://via.placeholder.com/400x250/AA96DA/ffffff?text=Tete+Gondole" alt="Tête de gondole">
+                    <div class="photo-number">Photo J</div>
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card photo-card" data-id="chevalet" data-type="photo">
+                    <img src="https://via.placeholder.com/400x250/FCBAD3/ffffff?text=Chevalet" alt="Chevalet">
+                    <div class="photo-number">Photo K</div>
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card photo-card" data-id="wobbler" data-type="photo">
+                    <img src="https://via.placeholder.com/400x250/FFFFD2/333333?text=Wobbler" alt="Wobbler">
+                    <div class="photo-number">Photo L</div>
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card photo-card" data-id="fronton-rayon" data-type="photo">
+                    <img src="https://via.placeholder.com/400x250/A8E6CF/ffffff?text=Fronton+Rayon" alt="Fronton rayon">
+                    <div class="photo-number">Photo M</div>
+                    <div class="match-indicator">✓</div>
+                </div>
+            </div>
+            
+            <div class="column names-column">
+                <div class="column-title">🏷️ NOMS</div>
+                
+                <div class="card name-card" data-id="wobbler" data-type="name">
+                    Wobbler
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card name-card" data-id="tete-gondole" data-type="name">
+                    Tête de Gondole
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card name-card" data-id="kakemono" data-type="name">
+                    Kakémono
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card name-card" data-id="etiquette-prix" data-type="name">
+                    Étiquette Prix
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card name-card" data-id="fronton-rayon" data-type="name">
+                    Fronton de Rayon
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card name-card" data-id="plv-promotion" data-type="name">
+                    PLV Promotion
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card name-card" data-id="presentoir" data-type="name">
+                    Présentoir
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card name-card" data-id="bandeau-lineaire" data-type="name">
+                    Bandeau de Linéaire
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card name-card" data-id="cadre-prix" data-type="name">
+                    Cadre Prix
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card name-card" data-id="affiche" data-type="name">
+                    Affiche
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card name-card" data-id="ilv-produit" data-type="name">
+                    ILV Produit
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card name-card" data-id="stop-rayon" data-type="name">
+                    Stop-Rayon
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card name-card" data-id="chevalet" data-type="name">
+                    Chevalet
+                    <div class="match-indicator">✓</div>
+                </div>
+            </div>
+            
+            <div class="column definitions-column">
+                <div class="column-title">📖 DÉFINITIONS</div>
+                
+                <div class="card definition-card" data-id="presentoir" data-type="definition">
+                    Mobilier ou structure qui met en valeur des produits de manière attractive. Facilite la présentation et l'accès aux articles.
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card definition-card" data-id="stop-rayon" data-type="definition">
+                    Panneau vertical perpendiculaire au rayon, visible de loin. Signale une promotion ou une catégorie de produits.
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card definition-card" data-id="fronton-rayon" data-type="definition">
+                    Panneau horizontal situé au sommet d'un rayon, visible de loin. Indique la catégorie de produits du rayon (signalétique).
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card definition-card" data-id="chevalet" data-type="definition">
+                    Support triangulaire posé au sol, souvent en carton. Présente une information ou promotion de manière autonome.
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card definition-card" data-id="kakemono" data-type="definition">
+                    Panneau vertical suspendu, souvent en tissu ou bâche, servant de PLV. Format étroit et allongé, très visible.
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card definition-card" data-id="etiquette-prix" data-type="definition">
+                    Petit support obligatoire indiquant le prix de vente d'un produit. Peut aussi mentionner la référence, taille, couleur.
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card definition-card" data-id="wobbler" data-type="definition">
+                    Petit panneau mobile fixé sur un ressort flexible, placé sur un rayon. Attire l'œil par son mouvement.
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card definition-card" data-id="bandeau-lineaire" data-type="definition">
+                    Bande horizontale fixée sur le bord d'une étagère pour attirer l'attention sur un produit ou une promotion.
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card definition-card" data-id="ilv-produit" data-type="definition">
+                    Support informatif donnant des détails techniques, conseils d'utilisation ou d'entretien. Ne promeut pas de marque spécifique.
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card definition-card" data-id="tete-gondole" data-type="definition">
+                    Emplacement en bout de rayon, très visible. Espace promotionnel premium loué par les marques pour mettre en avant leurs produits.
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card definition-card" data-id="plv-promotion" data-type="definition">
+                    Support publicitaire valorisant une marque ou un produit avec promotion, prix barré, "nouveau", etc. Incite à l'achat.
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card definition-card" data-id="cadre-prix" data-type="definition">
+                    Support qui maintient et met en valeur l'étiquette prix sur le rayon. Format standardisé, souvent clipsable.
+                    <div class="match-indicator">✓</div>
+                </div>
+                
+                <div class="card definition-card" data-id="affiche" data-type="definition">
+                    Support papier ou cartonné de format variable, fixé au mur ou sur un support. Peut être PLV (promotion) ou ILV (information).
+                    <div class="match-indicator">✓</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <button class="hint-btn" id="hintBtn">💡 Indice</button>
+            <button class="pdf-btn" id="pdfBtn">📄 Sauvegarder en PDF</button>
+            <button class="reset-btn" id="resetBtn">🔄 Recommencer</button>
+        </div>
+        
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        let selection = { photo: null, name: null, definition: null };
+        let matchedTrios = new Set();
+        let totalTrios = 13;
+
+        const cards = document.querySelectorAll('.card');
+        const hintBtn = document.getElementById('hintBtn');
+        const pdfBtn = document.getElementById('pdfBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const progressDiv = document.getElementById('progress');
+        const resultDiv = document.getElementById('result');
+        const hintMessage = document.getElementById('hintMessage');
+
+        function updateProgress() {
+            const count = matchedTrios.size;
+            progressDiv.textContent = `Trios formés : ${count}/${totalTrios} 🎯`;
+            
+            if (count === totalTrios) {
+                showVictory();
+            }
+        }
+
+        function showVictory() {
+            resultDiv.classList.add('success', 'show');
+            resultDiv.textContent = '🎉 BRAVO ! Tu as trouvé tous les trios ! Parfait ! 🎉';
+            resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function checkTrio() {
+            const { photo, name, definition } = selection;
+            
+            if (photo && name && definition) {
+                if (photo === name && name === definition) {
+                    // Trio correct !
+                    matchedTrios.add(photo);
+                    
+                    // Marquer les cartes comme matched
+                    cards.forEach(card => {
+                        if (card.dataset.id === photo) {
+                            card.classList.remove('selected', 'incorrect');
+                            card.classList.add('matched');
+                        }
+                    });
+                    
+                    // Feedback visuel positif
+                    showHint('✅ Trio correct ! Continue !', 'success');
+                    
+                    // Reset selection
+                    selection = { photo: null, name: null, definition: null };
+                    updateProgress();
+                } else {
+                    // Trio incorrect
+                    cards.forEach(card => {
+                        if (card.classList.contains('selected')) {
+                            card.classList.add('incorrect');
+                            setTimeout(() => {
+                                card.classList.remove('incorrect', 'selected');
+                            }, 800);
+                        }
+                    });
+                    
+                    showHint('❌ Ce trio ne correspond pas. Réessaye !', 'error');
+                    selection = { photo: null, name: null, definition: null };
+                }
+            }
+        }
+
+        function showHint(message, type) {
+            hintMessage.textContent = message;
+            hintMessage.className = 'hint-message show';
+            if (type === 'error') {
+                hintMessage.style.background = '#FFEBEE';
+                hintMessage.style.color = '#C62828';
+            } else {
+                hintMessage.style.background = '#E8F5E9';
+                hintMessage.style.color = '#2E7D32';
+            }
+            
+            setTimeout(() => {
+                hintMessage.classList.remove('show');
+            }, 2000);
+        }
+
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                if (card.classList.contains('matched')) return;
+                
+                const type = card.dataset.type;
+                const id = card.dataset.id;
+                
+                // Désélectionner les autres cartes du même type
+                cards.forEach(c => {
+                    if (c.dataset.type === type && c !== card) {
+                        c.classList.remove('selected');
+                    }
+                });
+                
+                // Toggle selection
+                if (selection[type] === id) {
+                    card.classList.remove('selected');
+                    selection[type] = null;
+                } else {
+                    card.classList.add('selected');
+                    selection[type] = id;
+                }
+                
+                // Vérifier si on a un trio complet
+                checkTrio();
+            });
+        });
+
+        hintBtn.addEventListener('click', () => {
+            const unmatchedIds = [];
+            cards.forEach(card => {
+                if (!card.classList.contains('matched') && card.dataset.type === 'photo') {
+                    unmatchedIds.push(card.dataset.id);
+                }
+            });
+            
+            if (unmatchedIds.length > 0) {
+                const randomId = unmatchedIds[Math.floor(Math.random() * unmatchedIds.length)];
+                
+                cards.forEach(card => {
+                    if (card.dataset.id === randomId) {
+                        card.style.boxShadow = '0 0 20px 5px #FFD700';
+                        setTimeout(() => {
+                            card.style.boxShadow = '';
+                        }, 2000);
+                    }
+                });
+                
+                showHint('💡 Les cartes qui brillent forment un trio !', 'success');
+            }
+        });
+
+        pdfBtn.addEventListener('click', () => {
+            generatePDF();
+        });
+
+        function generatePDF() {
+            // Créer le contenu du PDF
+            let pdfContent = `
+                JEU DES TRIOS - SUPPORTS D'AFFICHAGE EN MAGASIN
+                ================================================
+                
+                Score : ${matchedTrios.size}/${totalTrios} trios trouvés
+                
+                TRIOS RÉUSSIS :
+                ---------------
+            `;
+            
+            const supportNames = {
+                'etiquette-prix': 'Étiquette Prix',
+                'cadre-prix': 'Cadre Prix',
+                'stop-rayon': 'Stop-Rayon',
+                'presentoir': 'Présentoir',
+                'kakemono': 'Kakémono',
+                'affiche': 'Affiche',
+                'ilv-produit': 'ILV Produit',
+                'plv-promotion': 'PLV Promotion',
+                'bandeau-lineaire': 'Bandeau de Linéaire',
+                'tete-gondole': 'Tête de Gondole',
+                'chevalet': 'Chevalet',
+                'wobbler': 'Wobbler',
+                'fronton-rayon': 'Fronton de Rayon'
+            };
+            
+            matchedTrios.forEach(id => {
+                pdfContent += `\n✓ ${supportNames[id]}`;
+            });
+            
+            if (matchedTrios.size < totalTrios) {
+                pdfContent += '\n\nTRIOS RESTANTS À TROUVER :\n-------------------------';
+                Object.keys(supportNames).forEach(id => {
+                    if (!matchedTrios.has(id)) {
+                        pdfContent += `\n○ ${supportNames[id]}`;
+                    }
+                });
+            } else {
+                pdfContent += '\n\n🎉 FÉLICITATIONS ! Tous les trios ont été trouvés ! 🎉';
+            }
+            
+            pdfContent += `\n\n\nDate : ${new Date().toLocaleDateString('fr-FR')}`;
+            
+            // Créer un blob et télécharger
+            const blob = new Blob([pdfContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `jeu-trios-affichage-magasin-${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showHint('📄 Fichier sauvegardé ! Tu peux le déposer dans le Padlet.', 'success');
+        }
+
+        resetBtn.addEventListener('click', () => {
+            selection = { photo: null, name: null, definition: null };
+            matchedTrios.clear();
+            
+            cards.forEach(card => {
+                card.classList.remove('selected', 'matched', 'correct', 'incorrect');
+            });
+            
+            resultDiv.classList.remove('show');
+            hintMessage.classList.remove('show');
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        updateProgress();
+    </script>
+</body>
+</html>
