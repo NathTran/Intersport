@@ -668,9 +668,21 @@
             <button class="reset-btn" id="resetBtn">🔄 Recommencer</button>
         </div>
         
-        <div class="result" id="result"></div>
-    </div>
-
+        <div class="result" id="result"></div>  
+        <!-- Contenu pour l'impression PDF -->
+        <div class="print-content" id="printContent">
+            <div class="print-header">
+                <h2>🏪 Jeu des Trios - Supports d'Affichage en Magasin</h2>
+                <p>Résultats de l'activité</p>
+                <div class="print-score" id="printScore"></div>
+            </div>
+            
+            <div class="print-section" id="printMatched"></div>
+            <div class="print-section" id="printRemaining"></div>
+            
+            <div class="print-footer" id="printFooter"></div>
+        </div>
+       </div>
     <script>
         let selection = { photo: null, name: null, definition: null };
         let matchedTrios = new Set();
@@ -683,6 +695,60 @@
         const progressDiv = document.getElementById('progress');
         const resultDiv = document.getElementById('result');
         const hintMessage = document.getElementById('hintMessage');
+                const supportData = {
+            'etiquette-prix': {
+                name: 'Étiquette Prix',
+                def: 'Petite étiquette obligatoire qui indique le prix du produit. Elle peut aussi donner la taille, la couleur ou la référence.'
+            },
+            'cadre-prix': {
+                name: 'Cadre Prix',
+                def: 'Petit support en plastique qui tient l\'étiquette de prix sur le rayon. Il se clipse facilement.'
+            },
+            'stop-rayon': {
+                name: 'Stop-Rayon',
+                def: 'Panneau vertical fixé sur le côté du rayon. On le voit de loin pour repérer une promo ou un type de produit.'
+            },
+            'presentoir': {
+                name: 'Présentoir',
+                def: 'Meuble ou support qui présente les produits de façon attractive pour donner envie de les acheter.'
+            },
+            'kakemono': {
+                name: 'Kakémono',
+                def: 'Grande affiche verticale suspendue (souvent en tissu), très visible. Sert à faire de la publicité pour une marque.'
+            },
+            'affiche': {
+                name: 'Affiche',
+                def: 'Support en papier ou carton fixé au mur. Peut faire de la pub (PLV) ou donner des infos (ILV).'
+            },
+            'ilv-produit': {
+                name: 'ILV Produit',
+                def: 'Support qui donne des informations utiles sur le produit (mode d\'emploi, conseils, entretien) sans faire de pub pour une marque.'
+            },
+            'plv-promotion': {
+                name: 'PLV Promotion',
+                def: 'Publicité qui met en avant une marque ou un produit avec des prix barrés, des promos ou "NOUVEAU". Ça donne envie d\'acheter.'
+            },
+            'bandeau-lineaire': {
+                name: 'Bandeau de Linéaire',
+                def: 'Bande horizontale fixée sur le bord de l\'étagère pour attirer l\'œil sur un produit en promotion.'
+            },
+            'tete-gondole': {
+                name: 'Tête de Gondole',
+                def: 'Espace au bout du rayon, très visible. Les marques paient cher pour y mettre leurs produits en avant.'
+            },
+            'chevalet': {
+                name: 'Chevalet',
+                def: 'Support avec deux pieds posé devant le magasin (sur le trottoir). Il présente une affiche pour attirer les clients qui passent.'
+            },
+            'wobbler': {
+                name: 'Wobbler',
+                def: 'Petit panneau qui bouge, fixé sur un ressort sur le rayon. Il attire l\'attention grâce à son mouvement.'
+            },
+            'fronton-rayon': {
+                name: 'Fronton de Rayon',
+                def: 'Grand panneau horizontal en haut du rayon. Il indique quelle catégorie de produits se trouve dans ce rayon.'
+            }
+        };
 
         function updateProgress() {
             const count = matchedTrios.size;
@@ -806,67 +872,73 @@
             }
         });
 
-        pdfBtn.addEventListener('click', () => {
+      pdfBtn.addEventListener('click', () => {
             generatePDF();
         });
 
         function generatePDF() {
-            // Créer le contenu du PDF
-            let pdfContent = `
-                JEU DES TRIOS - SUPPORTS D'AFFICHAGE EN MAGASIN
-                ================================================
-                
-                Score : ${matchedTrios.size}/${totalTrios} trios trouvés
-                
-                TRIOS RÉUSSIS :
-                ---------------
-            `;
+            const printScore = document.getElementById('printScore');
+            const printMatched = document.getElementById('printMatched');
+            const printRemaining = document.getElementById('printRemaining');
+            const printFooter = document.getElementById('printFooter');
             
-            const supportNames = {
-                'etiquette-prix': 'Étiquette Prix',
-                'cadre-prix': 'Cadre Prix',
-                'stop-rayon': 'Stop-Rayon',
-                'presentoir': 'Présentoir',
-                'kakemono': 'Kakémono',
-                'affiche': 'Affiche',
-                'ilv-produit': 'ILV Produit',
-                'plv-promotion': 'PLV Promotion',
-                'bandeau-lineaire': 'Bandeau de Linéaire',
-                'tete-gondole': 'Tête de Gondole',
-                'chevalet': 'Chevalet',
-                'wobbler': 'Wobbler',
-                'fronton-rayon': 'Fronton de Rayon'
-            };
+            const score = matchedTrios.size;
+            const percentage = Math.round((score / totalTrios) * 100);
+            printScore.innerHTML = `Score : ${score}/${totalTrios} trios trouvés (${percentage}%)`;
             
-            matchedTrios.forEach(id => {
-                pdfContent += `\n✓ ${supportNames[id]}`;
-            });
-            
-            if (matchedTrios.size < totalTrios) {
-                pdfContent += '\n\nTRIOS RESTANTS À TROUVER :\n-------------------------';
-                Object.keys(supportNames).forEach(id => {
-                    if (!matchedTrios.has(id)) {
-                        pdfContent += `\n○ ${supportNames[id]}`;
-                    }
+            if (matchedTrios.size > 0) {
+                let matchedHTML = '<h3>✅ Trios Réussis</h3>';
+                matchedTrios.forEach(id => {
+                    const data = supportData[id];
+                    matchedHTML += `
+                        <div class="print-trio">
+                            <div class="print-trio-name">${data.name}</div>
+                            <div class="print-trio-def">${data.def}</div>
+                        </div>
+                    `;
                 });
+                printMatched.innerHTML = matchedHTML;
             } else {
-                pdfContent += '\n\n🎉 FÉLICITATIONS ! Tous les trios ont été trouvés ! 🎉';
+                printMatched.innerHTML = '';
             }
             
-            pdfContent += `\n\n\nDate : ${new Date().toLocaleDateString('fr-FR')}`;
+            const remaining = [];
+            Object.keys(supportData).forEach(id => {
+                if (!matchedTrios.has(id)) {
+                    remaining.push(id);
+                }
+            });
             
-            // Créer un blob et télécharger
-            const blob = new Blob([pdfContent], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `jeu-trios-affichage-magasin-${Date.now()}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            if (remaining.length > 0) {
+                let remainingHTML = '<h3>📋 Trios Restants à Trouver</h3>';
+                remaining.forEach(id => {
+                    const data = supportData[id];
+                    remainingHTML += `
+                        <div class="print-trio incomplete">
+                            <div class="print-trio-name">${data.name}</div>
+                            <div class="print-trio-def">${data.def}</div>
+                        </div>
+                    `;
+                });
+                printRemaining.innerHTML = remainingHTML;
+            } else {
+                printRemaining.innerHTML = '<h3>🎉 Félicitations ! Tous les trios ont été trouvés !</h3>';
+            }
             
-            showHint('📄 Fichier sauvegardé ! Tu peux le déposer dans le Padlet.', 'success');
+            const date = new Date().toLocaleDateString('fr-FR', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            printFooter.innerHTML = `
+                <p>Date : ${date}</p>
+                <p>Activité pédagogique - Supports d'affichage en magasin</p>
+            `;
+            
+            setTimeout(() => {
+                window.print();
+            }, 100);
         }
 
         resetBtn.addEventListener('click', () => {
